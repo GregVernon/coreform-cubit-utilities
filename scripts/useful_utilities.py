@@ -120,3 +120,108 @@ def batch_remove_overlaps_from_volume( modify_volume_id, max_gap=0.0005, max_ang
   for vid in V:
     cubit.cmd( f"remove overlap volume {vid} {modify_volume_id} modify volume {modify_volume_id}" )
 
+def count_acis_entity_types():
+  """
+  Counts the amount of ACIS entity types, prints and returns findings.
+
+  This method queries every surface and curve in the active model and
+  counts the total amounts of the different ACIS entity types.
+  The method then prints the count summaries to the terminal.
+  The method also returns the entity ids within a nested tuple to enable
+  deeper investigation.
+
+  Parameters
+  ----------
+  None
+
+  Returns
+  ----------
+  A tuple of tuples of lists of the entity ids of each entity type
+    ( (tuple_of_surface_type_lists), (tuple_of_curve_type_lists) )
+  where:
+    tuple_of_surface_type_lists: ( plane_list, cone_list, sphere_list, torus_list, spline_list )
+    tuple_of_curve_type_lists:   ( straight_list, arc_list, ellipse_list, spline_list )
+
+  Example
+  ----------
+  cubit.cmd('reset')
+  cubit.cmd('bri x 1')
+  cubit.cmd('create frustum height 1 radius 0.3 top 0')
+  cubit.cmd('create sphere radius 1')
+  cubit.cmd('create torus major radius 1 minor radius 0.1')
+  cubit.cmd('create sphere radius 1')
+  cubit.cmd('Volume 5 scale X 1 Y 2 Z 3 ')
+  cubit.cmd('split periodic volume all')
+  counts = count_acis_entity_types()
+  
+  # Prints:
+  Number of Plane  Surfaces: 7
+  Number of Cone   Surfaces: 2
+  Number of Sphere Surfaces: 2
+  Number of Torus  Surfaces: 4
+  Number of Spline Surfaces: 2
+  Number of Straight Curves: 14
+  Number of Arc      Curves: 12
+  Number of Ellipse  Curves: 1
+  Number of Spline   Curves: 1
+  
+  # Returns
+  counts = ( ( [1, 2, 3, 4, 5, 6, 8], 
+               [12, 13], 
+               [14, 15], 
+               [16, 17, 18, 19], 
+               [20, 21]), 
+             ( [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 17], 
+               [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 
+               [15], 
+               [30] ) 
+            )
+  """
+  S = cubit.get_entities("surface")
+  C = cubit.get_entities("curve")
+  # Process Surfaces
+  plane_surf = []
+  cone_surf = []
+  sphere_surf = []
+  torus_surf = []
+  spline_surf = []
+  for sid in S:
+    surf_type = cubit.get_surface_type( sid ).lower()
+    if surf_type == "plane surface":
+      plane_surf.append( sid )
+    elif surf_type == "cone surface":
+      cone_surf.append( sid )
+    elif surf_type == "sphere surface":
+      sphere_surf.append( sid )
+    elif surf_type == "torus surface":
+      torus_surf.append( sid )
+    elif surf_type == "spline surface":
+      spline_surf.append( sid )
+  # Process Curves
+  straight_curve = []
+  arc_curve = []
+  ellipse_curve = []
+  spline_curve = []
+  for cid in C:
+    curve_type = cubit.get_curve_type( cid ).lower()
+    if curve_type == "straight curve":
+      straight_curve.append( cid )
+    elif curve_type == "arc curve":
+      arc_curve.append( cid )
+    elif curve_type == "ellipse curve":
+      ellipse_curve.append( cid )
+    elif curve_type == "spline curve":
+      spline_curve.append( cid )
+  ## Print Results
+  out_str  = f"Number of Plane  Surfaces: {len( plane_surf )}\n" 
+  out_str += f"Number of Cone   Surfaces: {len( cone_surf )}\n" 
+  out_str += f"Number of Sphere Surfaces: {len( sphere_surf )}\n" 
+  out_str += f"Number of Torus  Surfaces: {len( torus_surf )}\n" 
+  out_str += f"Number of Spline Surfaces: {len( spline_surf )}\n" 
+  out_str += f"Number of Straight Curves: {len( straight_curve )}\n"
+  out_str += f"Number of Arc      Curves: {len( arc_curve )}\n"
+  out_str += f"Number of Ellipse  Curves: {len( ellipse_curve )}\n"
+  out_str += f"Number of Spline   Curves: {len( spline_curve )}\n"
+  print( out_str )
+  return ( ( plane_surf, cone_surf, sphere_surf, torus_surf, spline_surf ), 
+          ( straight_curve, arc_curve, ellipse_curve, spline_curve ) )
