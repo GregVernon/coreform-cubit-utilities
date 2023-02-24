@@ -77,3 +77,46 @@ def list_to_str(input_str):
   """
 
   return " ".join([str(val) for val in input_str])
+
+def batch_remove_overlaps_from_volume( modify_volume_id, max_gap=0.0005, max_angle=5.0 ):
+  """
+  Removes all overlaps from a volume.
+
+  This method accepts an integer of a volume from which the user wishes to remove overlaps.
+  This method also allows the user to optionally specify the 'Max Gap' and `Max Gap Angle`,
+  which are the two settings the user can control in the `Manage Gaps and Volume Overlaps`
+  GUI command panel.  
+  Note that if the user *doesn't* provide these arguments then this routine will use the 
+  same factory-default settings as in the GUI, and *will overwrite* any settings the user
+  may have already specified.
+  Thus, if the user wants to use non-default settings *the user must provide these inputs*.
+
+  Parameters
+  ----------
+  modify_volume_id : integer 
+    id of the volume to remove overlaps from
+  max_gap : float
+    the max gap value for calculating surface overlaps
+  max_gap_angle : float
+    the max gap angle, in degrees, for calculating surface overlaps
+
+  Returns
+  ----------
+  None
+
+  Example
+  ----------
+  cubit.cmd('reset')
+  cubit.cmd('brick x .1 y 0.01 z .4')
+  cubit.cmd('Volume all copy move x .12 y 0 z 0 repeat 9 nomesh ')
+  cubit.cmd('Volume all copy move x 0 y 0 z 0.42 repeat 9 nomesh ')
+  cubit.cmd('create brick bounding box Volume all extended absolute .1')
+  cubit.cmd('move volume 101 y 0.105')
+  batch_remove_overlaps_from_volume( 101, max_gap=0.0005, max_angle=5.0 )
+  """
+  cubit.set_overlap_max_gap( max_gap )
+  cubit.set_overlap_max_angle( max_angle )
+  V = cubit.get_overlapping_volumes_at_volume( modify_volume_id, cubit.get_entities( "volume" ) )
+  for vid in V:
+    cubit.cmd( f"remove overlap volume {vid} {modify_volume_id} modify volume {modify_volume_id}" )
+
