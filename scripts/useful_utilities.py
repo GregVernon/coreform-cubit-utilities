@@ -225,3 +225,50 @@ def count_acis_entity_types():
   print( out_str )
   return ( ( plane_surf, cone_surf, sphere_surf, torus_surf, spline_surf ), 
           ( straight_curve, arc_curve, ellipse_curve, spline_curve ) )
+
+def color_spline_surfaces():
+  """
+  Colors all spline surfaces red while non-spline surfaces colored white.
+
+  This method queries every surface in the active model and colors it red
+  if it is a spline surface or white if it is not a spline surface.
+  The method also replaces or creates a group with name 'spline_surfaces'
+  to which all the spline surfaces are added.
+
+  Parameters
+  ----------
+  None
+
+  Returns
+  ----------
+  No return values
+  Replaces or creates a group with name 'spline_surfaces' containing all found spline surfaces
+  Colors the spline surfaces red and non-spline surfaces white
+
+  Example
+  ----------
+  cubit.cmd('reset')
+  cubit.cmd('bri x 1')
+  cubit.cmd('create frustum height 1 radius 0.3 top 0')
+  cubit.cmd('create sphere radius 1')
+  cubit.cmd('create torus major radius 1 minor radius 0.1')
+  cubit.cmd('create sphere radius 1')
+  cubit.cmd('Volume 5 scale X 1 Y 2 Z 3 ')
+  cubit.cmd('split periodic volume all')
+  color_spline_surfaces()
+
+  """
+  cubit.cmd( "color surface all default" )
+  if cubit.get_id_from_name( "spline_surfaces" ):
+    cubit.cmd( "delete spline_surfaces" )
+  cubit.cmd( "create group 'spline_surfaces'" )
+  S = cubit.get_entities("surface")
+  spline_surf = []
+  for sid in S:
+    surf_type = cubit.get_surface_type( sid ).lower()
+    if surf_type == "spline surface":
+      spline_surf.append( sid )
+      cubit.cmd( f"color surface {sid} red" )
+    else:
+      cubit.cmd( f"color surface {sid} white" )
+  cubit.cmd( f"spline_surfaces add surface {list_to_str( spline_surf )}" )
